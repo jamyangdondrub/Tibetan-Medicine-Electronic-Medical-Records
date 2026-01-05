@@ -3,7 +3,7 @@ Tibetan Medicine Electronic Medical Record Medical Knowledge Unit Recognition
 
 ## BERT-BiLSTM-CRF模型
 ### 输入数据格式请处理成BIO格式，如下：
-'''
+```
 སྐབས་	O
 རེར་	O
 མགོ་	O
@@ -46,16 +46,16 @@ Tibetan Medicine Electronic Medical Record Medical Knowledge Unit Recognition
 ཞན་	E-LB
 །	O
 
-'''
-- 运行的环境
-'''
+```
+### 运行的环境
+```
 python == 3.7.4
 pytorch == 1.3.1 
 pytorch-crf == 0.7.2  
 pytorch-transformers == 1.2.0
-'''              
-## 使用方法
-'''
+```            
+### 使用方法
+```
 #!/bin/env bash
 
 BASE_DIR=/home/yang/Desktop/Tibetan-wwm
@@ -82,4 +82,4 @@ python ner.py \
     --rnn_dim 256 \
     --clean True \
     --output_dir $OUTPUT_DIR
-'''
+```
