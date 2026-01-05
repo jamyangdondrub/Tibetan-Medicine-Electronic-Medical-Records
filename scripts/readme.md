@@ -55,9 +55,12 @@ pytorch-transformers == 1.2.0
 
 ### 使用方法
 ```
-BERT_BASE_DIR=bert-base-chinese
-DATA_DIR=/raid/ypj/openSource/cluener_public/
-OUTPUT_DIR=./model/clue_bilstm
+#!/bin/env bash
+
+BASE_DIR=/home/yang/Desktop/Tibetan-wwm
+BERT_BASE_DIR=$BASE_DIR/bert-tibetan
+DATA_DIR=$BASE_DIR/data/cluener_public
+OUTPUT_DIR=$BASE_DIR/model
 export CUDA_VISIBLE_DEVICES=0
 
 python ner.py \
@@ -65,13 +68,13 @@ python ner.py \
     --do_train True \
     --do_eval True \
     --do_test True \
-    --max_seq_length 256 \
-    --train_file ${DATA_DIR}/train.txt \
-    --eval_file ${DATA_DIR}/dev.txt \
-    --test_file ${DATA_DIR}/test.txt \
-    --train_batch_size 32 \
-    --eval_batch_size 32 \
-    --num_train_epochs 10 \
+    --max_seq_length 150 \
+    --train_file ${DATA_DIR}/train.txt\
+    --eval_file ${DATA_DIR}/dev.txt\
+    --test_file ${DATA_DIR}/test.txt\
+    --train_batch_size 1 \
+    --eval_batch_size 1 \
+    --num_train_epochs 1\
     --do_lower_case \
     --logging_steps 200 \
     --need_birnn True \
