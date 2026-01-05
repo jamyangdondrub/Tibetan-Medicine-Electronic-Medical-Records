@@ -1,8 +1,8 @@
 # Tibetan-Medicine-Electronic-Medical-Records
 Tibetan Medicine Electronic Medical Record Medical Knowledge Unit Recognition
 
-BERT-BiLSTM-CRF模型
-输入数据格式请处理成BIO格式，如下：
+## BERT-BiLSTM-CRF模型
+# 输入数据格式请处理成BIO格式，如下：
 སྐབས་	O
 རེར་	O
 མགོ་	O
