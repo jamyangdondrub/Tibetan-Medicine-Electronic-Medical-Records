@@ -156,7 +156,7 @@ python nert.py
 ### 2. 训练模型
 
 ```bash
-BERT_BASE_DIR=bert-base-chinese
+BERT_BASE_DIR= /path/to/your/model_name
 DATA_DIR=./data/
 OUTPUT_DIR=./model/output
 
@@ -182,7 +182,7 @@ python ner.py \
 
 ```bash
 python ner.py \
-    --model_name_or_path bert-base-chinese \
+    --model_name_or_path /path/to/your/model_name \
     --do_test True \
     --max_seq_length 256 \
     --test_file ./data/test.txt \
@@ -196,7 +196,7 @@ python ner.py \
 
 ```bash
 python ner.py \
-    --model_name_or_path bert-base-chinese \
+    --model_name_or_path /path/to/your/model_name \
     --do_inference True \
     --max_seq_length 512 \
     --test_file ./input_dir/ \
