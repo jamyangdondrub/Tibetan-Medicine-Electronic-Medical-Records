@@ -178,7 +178,7 @@ pip install torch transformers pytorch-crf tensorboardX tqdm numpy pytorch-trans
 ། O
 ```
 
-在本项目的医药领域数据中，标签体系使用了`BIOES`格式，实体类型包括：`JB`、`TZ`、`LB`、`JZ`、`YM`、`JL`、`YF、`FL`、`BW`、`FW`、`CD`、`SJ 等。
+在本项目的医药领域数据中，标签体系使用了`BIOES`格式，实体类型包括：`JB`、`TZ`、`LB`、`JZ`、`YM`、`JL`、`YF、`FL`、`BW`、`FW`、`CD`、`SJ` 等。
 
 ---
 
