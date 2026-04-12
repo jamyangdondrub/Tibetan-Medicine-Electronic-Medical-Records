@@ -182,7 +182,7 @@ pip install torch transformers pytorch-crf tensorboardX tqdm numpy pytorch-trans
 
 ---
 
-**配置文件说明**：
+# **配置文件说明**：Tibetan-wwm/config.json
 
 ## 📌 TibetanBERT Configuration Parameters
 
