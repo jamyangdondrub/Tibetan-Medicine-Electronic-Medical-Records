@@ -192,7 +192,7 @@ pip install torch transformers pytorch-crf tensorboardX tqdm numpy pytorch-trans
 | num_hidden_layers | 12 | Transformer 编码层数 |
 | num_attention_heads | 12 | 多头注意力头数量 |
 | intermediate_size | 3072 | FFN 中间层维度 |
-| vocab_size | 32000 | 词表大小（中文 BERT） |
+| vocab_size | 32000 | 词表大小 |
 | max_position_embeddings | 512 | 最大位置编码长度 |
 | hidden_dropout_prob | 0.1 | Dropout 概率 |
 
