@@ -290,7 +290,9 @@ tensorboard --logdir=./model/output/eval
 <img width="2559" height="2325" alt="image" src="https://github.com/user-attachments/assets/03bda604-5d14-47b6-8274-1c0dca8f37cd" />
 
 ---
+# 🔗 原始数据： ZY_MER_Corpus
 
+- ## 📥 Raw data: [Download](https://github.com/jamyangdondrub/ZY-EMR-Corpus)
 
 
 
