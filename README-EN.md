@@ -5,18 +5,22 @@
 1. [Project Overview](#project-overview)
 2. [Project Structure](#project-structure)
 3. [Environment Dependencies](#environment-dependencies)
-4. [Data Format](#data-format)
+4. [Methodology](#methodology)
+5. [Data Format](#data-format)
    - [Raw Data Preprocessing Script](#raw-data-preprocessing-script-nertpy-preprocessing-version)
    - [Training Data Format (BIOES)](#training-data-format-bioes)
-5. [Detailed Module Analysis](#detailed-module-analysis)
+6. [Detailed Module Analysis](#detailed-module-analysis)
    - [models.py — Model Definition](#modelspy--model-definition)
    - [ner.py — Main Training/Prediction Script](#nerpy--main-trainingprediction-script)
    - [utils.py — Data Processing Utilities](#utilspy--data-processing-utilities)
    - [conlleval.py — Evaluation Script](#conllevalpy--evaluation-script)
    - [clue_process.py — CLUE Dataset Preprocessing](#clue_processpy--clue-dataset-preprocessing)
-6. [Configuration File Description](#configuration-file-description)
-7. [Usage](#usage)
-8. [Model Performance](#model-performance)
+7. [Configuration File Description](#configuration-file-description)
+8. [Usage](#usage)
+9. [Model Performance](#model-performance)
+10. [Citations](#citations)
+11. [License](#license)
+12. [Contributing](#contributing)
 
 ---
 
@@ -40,21 +44,17 @@ Tibetan-WWM/
 ├── utils.py             # Data processing utilities & Dataset construction
 ├── conlleval.py         # Evaluation script (computes P / R / F1)
 ├── clue_process.py      # JSON format → BIO annotation format conversion
-
 ├── Tibetan-wwm/
 │   ├── bert_config.json  # BERT model configuration file
 │   ├── vocab.txt         # Vocabulary file
-
 ├── data/
 │   ├── train.txt         # Training set (BIOES annotation format)
 │   ├── dev.txt           # Validation set (BIOES annotation format)
 │   ├── test.txt          # Test set (BIOES annotation format)
-
 ├── model/
 │   ├── logs/             # Training log files
 │   ├── checkpoints/      # Saved model weights
-
-└── README.md            # Project documentation
+└── README.md             # Project documentation
 ```
 
 ---
@@ -66,7 +66,7 @@ python >= 3.7
 pytorch >= 1.3.1
 pytorch-crf >= 0.7.2
 transformers
-pytorch-transformers    
+pytorch-transformers
 tensorboardX
 tqdm
 numpy
@@ -77,6 +77,15 @@ Installation command:
 ```bash
 pip install torch transformers pytorch-crf tensorboardX tqdm numpy pytorch-transformers
 ```
+
+---
+
+## Methodology
+
+1. **Data Preprocessing** — Raw inline-annotated Tibetan EMR text is converted to BIOES format using `nert.py`.
+2. **Model Architecture** — TibetanBERT encodes token embeddings → optional BiLSTM captures sequential context → CRF decodes globally optimal labels.
+3. **Training** — Fine-tuned with AdamW optimizer on labeled EMR data.
+4. **Evaluation** — Entity-level F1 score using CoNLL protocol via `conlleval.py`.
 
 ---
 
@@ -162,9 +171,33 @@ In the medical domain data of this project, the label system uses the `BIOES` fo
 
 ---
 
-# **Configuration File Description**: Tibetan-wwm/config.json
+## Detailed Module Analysis
 
-## 📌 TibetanBERT Configuration Parameters
+### models.py — Model Definition
+
+Defines the `BertBiLSTMCRF` model class. Stacks TibetanBERT → optional BiLSTM → CRF decoder.
+
+### ner.py — Main Training/Prediction Script
+
+Main script controlling all pipeline modes via command-line flags: `--do_train`, `--do_eval`, `--do_test`, `--do_inference`.
+
+### utils.py — Data Processing Utilities
+
+Builds PyTorch `Dataset` objects from BIOES text files. Handles tokenization, label alignment, and automatic sequence splitting at punctuation for texts exceeding 512 characters.
+
+### conlleval.py — Evaluation Script
+
+Adapted from the CoNLL shared task. Computes entity-level Precision, Recall, and F1 per label type and overall.
+
+### clue_process.py — CLUE Dataset Preprocessing
+
+Converts CLUE-format JSON annotations to BIO format for pipeline compatibility.
+
+---
+
+## Configuration File Description
+
+### 📌 TibetanBERT Configuration Parameters (`Tibetan-wwm/config.json`)
 
 | Parameter | Default Value | Description |
 |-----------|---------------|-------------|
@@ -215,7 +248,7 @@ python ner.py \
     --output_dir $OUTPUT_DIR
 ```
 
-### 4. Test the Model
+### 3. Test the Model
 
 ```bash
 python ner.py \
@@ -229,7 +262,7 @@ python ner.py \
     --output_dir ./model/output
 ```
 
-### 5. Inference (Batch Prediction)
+### 4. Inference (Batch Prediction)
 
 ```bash
 python ner.py \
@@ -243,7 +276,7 @@ python ner.py \
     --output_dir ./model/output
 ```
 
-### 6. View Training Logs
+### 5. View Training Logs
 
 ```bash
 tensorboard --logdir=./model/output/eval
@@ -269,6 +302,7 @@ tensorboard --logdir=./model/output/eval
 
 - ## 📥 Raw data: [Download](https://github.com/jamyangdondrub/ZY-EMR-Corpus)
 
+> **Note:** A subset of ZY_MER_Corpus is publicly available at the link above. 
 ---
 
 ## Notes
@@ -278,3 +312,55 @@ tensorboard --logdir=./model/output/eval
 3. **Long Text Handling**: The `read_pred_data` method in `utils.py` will automatically split texts exceeding 512 characters at punctuation marks.
 4. **Label Consistency**: The label scheme must remain consistent between training and prediction. The label mapping is saved in `output_dir/label2id.pkl`.
 5. **Mixed Imports**: The code uses both `pytorch-transformers` (legacy) and `transformers` (current) imports. In practice, `transformers` takes precedence at runtime.
+
+---
+
+## Citations
+
+If you use this code or dataset in your research, please cite the following:
+
+**TibetanBERT-wwm pre-trained model:**
+
+```bibtex
+@article{liang2024tibetanbertwwm,
+  author  = {Liang, Yiming and Lv, Hua and Li, Ya and Duo, La and Liu, Cili and Zhou, Qiang},
+  title   = {Tibetan-BERT-wwm: A Tibetan Pretrained Model With Whole Word Masking for Text Classification},
+  journal = {IEEE Transactions on Computational Social Systems},
+  volume  = {11},
+  number  = {5},
+  pages   = {6268--6277},
+  year    = {2024},
+  doi     = {10.1109/TCSS.2024.3374633}
+}
+```
+
+**ZY_MER_Corpus dataset:**
+
+```bibtex
+@misc{zy_mer_corpus,
+  author       = {jamyangdondrub},
+  title        = {ZY-EMR-Corpus: Tibetan Electronic Medical Record Corpus},
+  year         = {2024},
+  howpublished = {\url{https://github.com/jamyangdondrub/ZY-EMR-Corpus}}
+}
+```
+
+---
+
+## License
+
+This project is released under the [MIT License](LICENSE).
+Free to use for academic and research purposes.
+For commercial use, please contact the authors.
+
+---
+
+## Contributing
+
+Contributions are welcome!
+
+1. Fork this repository: `https://github.com/jamyangdondrub/Tibetan-Medicine-Electronic-Medical-Records/fork`
+2. Create your feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m 'Add some feature'`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a Pull Request at: `https://github.com/jamyangdondrub/Tibetan-Medicine-Electronic-Medical-Records/pulls`
