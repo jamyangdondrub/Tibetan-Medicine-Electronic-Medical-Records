@@ -1,3 +1,6 @@
+[English](README.md) | [简体中文](README-CN.md)
+
+
 # 🚀 Tibetan Electronic Medical Record — Medical Knowledge Unit Recognition
 
 A named-entity recognition (NER) framework for identifying medical knowledge units in **Tibetan-medicine electronic medical records (EMRs)**, based on **TibetanBERT-wwm + BiLSTM + CRF**.
