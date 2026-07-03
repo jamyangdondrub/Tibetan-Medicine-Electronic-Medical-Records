@@ -1,114 +1,93 @@
-# 🚀 Tibetan Electronic Medical Record Medical Knowledge Unit Recognition: Detailed Project Documentation
+# 🚀 Tibetan Electronic Medical Record — Medical Knowledge Unit Recognition
+
+A named-entity recognition (NER) framework for identifying medical knowledge units in **Tibetan-medicine electronic medical records (EMRs)**, based on **TibetanBERT-wwm + BiLSTM + CRF**.
+
+---
 
 ## Table of Contents
 
 1. [Project Overview](#project-overview)
-2. [Project Structure](#project-structure)
-3. [Environment Dependencies](#environment-dependencies)
-4. [Methodology](#methodology)
-5. [Data Format](#data-format)
-   - [Raw Data Preprocessing Script](#raw-data-preprocessing-script-nertpy-preprocessing-version)
-   - [Training Data Format (BIOES)](#training-data-format-bioes)
-6. [Detailed Module Analysis](#detailed-module-analysis)
-   - [models.py — Model Definition](#modelspy--model-definition)
-   - [ner.py — Main Training/Prediction Script](#nerpy--main-trainingprediction-script)
-   - [utils.py — Data Processing Utilities](#utilspy--data-processing-utilities)
-   - [conlleval.py — Evaluation Script](#conllevalpy--evaluation-script)
-   - [clue_process.py — CLUE Dataset Preprocessing](#clue_processpy--clue-dataset-preprocessing)
-7. [Configuration File Description](#configuration-file-description)
-8. [Usage](#usage)
-9. [Model Performance](#model-performance)
-10. [Citations](#citations)
-11. [License](#license)
-12. [Contributing](#contributing)
+2. [Dataset Information](#dataset-information)
+   - [Overview & Provenance](#overview--provenance)
+   - [Dataset Statistics](#dataset-statistics)
+   - [Entity (Knowledge-Unit) Types](#entity-knowledge-unit-types)
+   - [Data Format](#data-format)
+   - [Data Splits](#data-splits)
+   - [How to Obtain the Data](#how-to-obtain-the-data)
+3. [Code Information](#code-information)
+   - [Project Structure](#project-structure)
+   - [Module Descriptions](#module-descriptions)
+   - [Model Configuration](#model-configuration)
+4. [Requirements](#requirements)
+5. [Usage Instructions](#usage-instructions)
+   - [Installation](#installation)
+   - [Step 1 — Preprocess Raw Data](#step-1--preprocess-raw-data)
+   - [Step 2 — Train the Model](#step-2--train-the-model)
+   - [Step 3 — Test the Model](#step-3--test-the-model)
+   - [Step 4 — Inference (Batch Prediction)](#step-4--inference-batch-prediction)
+   - [Step 5 — View Training Logs](#step-5--view-training-logs)
+6. [Methodology](#methodology)
+7. [Model Performance](#model-performance)
+8. [Notes](#notes)
+9. [Citations](#citations)
+10. [License](#license)
+11. [Contributing](#contributing)
+12. [Contact](#contact)
 
 ---
 
 ## Project Overview
 
-This project implements a medical knowledge unit recognition model for Tibetan electronic medical records based on **TibetanBERT + WWM + BiLSTM + CRF**. The model architecture consists of three layers:
+This repository provides the code and data-processing pipeline for **medical knowledge-unit recognition** in Tibetan-medicine EMRs. Given free-text Tibetan clinical records, the model automatically labels spans corresponding to twelve categories of medical knowledge units (disease names, clinical manifestations, body parts, drugs, dosages, vital signs, examination indicators, etc.).
 
-- **TibetanBERT Layer**: Uses a pre-trained Tibetan BERT model to encode input text and obtain context-aware character-level representations.
-- **BiLSTM Layer** (optional): Stacks a bidirectional LSTM on top of the BERT output to further capture sequential context information.
-- **CRF Layer**: A Conditional Random Field decoding layer that applies transition constraints between labels to predict globally optimal label sequences, preventing illegal label transitions (e.g., `I-PER` appearing after `B-LOC`).
+The model architecture consists of three stacked layers:
 
----
+- **TibetanBERT-wwm layer** — a pre-trained Tibetan BERT with whole-word masking (WWM) that encodes the input text into context-aware, syllable-level representations.
+- **BiLSTM layer** *(optional)* — a bidirectional LSTM stacked on top of the BERT output to further capture sequential context.
+- **CRF layer** — a Conditional Random Field decoder that applies label-transition constraints to produce the globally optimal label sequence, preventing illegal transitions (e.g., an incompatible `B-YY` followed by `I-XX`).
 
-## 📌 Project Structure
-
-```
-Tibetan-WWM/
-├── ner.py               # Main entry point: training / evaluation / testing / inference
-├── nert.py              # Converts raw annotated data to BIOES format
-├── models.py            # Model definition: BERT-BiLSTM-CRF
-├── utils.py             # Data processing utilities & Dataset construction
-├── conlleval.py         # Evaluation script (computes P / R / F1)
-├── clue_process.py      # JSON format → BIO annotation format conversion
-├── Tibetan-wwm/
-│   ├── bert_config.json  # BERT model configuration file
-│   ├── vocab.txt         # Vocabulary file
-├── data/
-│   ├── train.txt         # Training set (BIOES annotation format)
-│   ├── dev.txt           # Validation set (BIOES annotation format)
-│   ├── test.txt          # Test set (BIOES annotation format)
-├── model/
-│   ├── logs/             # Training log files
-│   ├── checkpoints/      # Saved model weights
-└── README.md             # Project documentation
-```
+The framework supports training, evaluation, testing, and batch inference through a single command-line entry point.
 
 ---
 
-## Environment Dependencies
+## Dataset Information
 
-```
-python >= 3.7
-pytorch >= 1.3.1
-pytorch-crf >= 0.7.2
-transformers
-pytorch-transformers
-tensorboardX
-tqdm
-numpy
-```
+### Overview & Provenance
 
-Installation command:
+The model is trained and evaluated on **ZY_MER_Corpus** (Tibetan Electronic Medical Record — Medical Entity Recognition corpus), a manually annotated collection of Tibetan-medicine clinical records.
 
-```bash
-pip install torch transformers pytorch-crf tensorboardX tqdm numpy pytorch-transformers
-```
+- **Collection period:** 2022–2023
+- **Language / script:** Tibetan (Uchen script)
+- **Domain:** Traditional Tibetan medicine (Sowa Rigpa) electronic medical records
 
----
+### Dataset Statistics
 
-## Methodology
+| Item | Count |
+|------|-------|
+| EMR documents | 1,487 |
+| Total annotated knowledge units | 130,647 |
 
-1. **Data Preprocessing** — Raw inline-annotated Tibetan EMR text is converted to BIOES format using `nert.py`.
-2. **Model Architecture** — TibetanBERT encodes token embeddings → optional BiLSTM captures sequential context → CRF decodes globally optimal labels.
-3. **Training** — Fine-tuned with AdamW optimizer on labeled EMR data.
-4. **Evaluation** — Entity-level F1 score using CoNLL protocol via `conlleval.py`.
+**Entity counts by type:**
 
----
+| Label | Type | Count |
+|-------|------|-------|
+| JB | Disease Name | 8,599 |
+| TZ | Vital Signs | 5,751 |
+| LB | Clinical Manifestation | 40,609 |
+| JZ | Examination Indicators | 6,281 |
+| YM | Drug Name | 4,893 |
+| JL | Drug Dosage | 4,355 |
+| YF | Administration Method | 5,225 |
+| FL | Non-Drug Treatment | 2,413 |
+| BW | Body Part | 38,387 |
+| FW | Body Location/Direction | 9,235 |
+| CD | Pain Intensity | 1,550 |
+| SJ | Duration | 3,349 |
+| **Total** | | **130,647** |
 
-## Data Format
+### Entity (Knowledge-Unit) Types
 
-### Raw Annotation Data Format
-
-The raw data uses an inline annotation format, where knowledge units are directly marked within sentences using the pattern `/knowledge_unit_text-label`. Non-knowledge-unit portions are left unannotated. Below is a sample of the raw data:
-
-```
-ན་ལུགས་གཙོ་བོ།གསོ་བྱའི་/མགོ་བོ-BW་/ན-LB་ཞིང་/ལྟག་རྩ-BW་/གཟེར་བ-LB།/ཡན་ལག་གི་ཚིགས་གཞི-BW་/ན-LB་ཞིང་/བརྐྱང་བསྐུམ་བྱེད་དཀའ་བ-LB།/མཁལ་རྐེད-BW་/འཁོར་ནས-CD་/ན་བ-LB་བཅས་/ལོ་བཞི-SJ་ལྷག་འགོར།
-ད་ལྟའི་ནད་ཀྱི་ལོ་རྒྱུས།ནད་2002གཞིའི་སློང་རྐྱེན་04མི་གསལ་07བར་ན་ལུགས་སུ་/མགོ་བོ-BW་དང་/མིག་ཕྲུམ-BW་/ན་བ-LB།/སྣ་གདོང-BW་/གཟེར-LBལ་/སྣ-BW་/འཚང་བ-LB།/སྣ་ནང-BW་/སྐམ་པ-LB།སྐབས་རེར་/མགོ་ཡུ་འཁོར-LB་བ་དང་/མགོ་བོ-BW་གཡས་སུ་/ན་ཟུག་ལངས-LB་ནས་/གཉིད་དཀའ་བ-LB།
-/མཇིང་ཚིགས-BW་ནས་/རོ་སྟོད-BW་བརྒྱུད་དུ་/གཟེར་བ-LB།/ཟས་ཀྱི་འཇུ་སྟོབས་ཆུང-LB་ལ་/ཟས་ཀྱི་དང་ག་ཞན-LB།ཞོགས་པར་/ཁ་ཏིག་ཁ་བ-LB།/ཁ-BW་/ལྕེ-BW་/སྐམ-LB་ལ་/སྐོམ་དད་ཆེ་བ-LB།/མཆིན་པ-BW་/མཁྲིས་བ-BW་/མདུན་རྒྱབ-FW་ཏུ་/སྦོས་ནས་ན་བ-LB།
-```
-
-**Format description**:
-
-- `/མགོ་བོ-BW` means "མགོ་བོ" (head) is a knowledge unit of type **BW** (body part)
-- `/ན-LB` means "ན" (pain) is a knowledge unit of type **LB** (clinical manifestation)
-- `/ལོ་བཞི-SJ` means "ལོ་བཞི" (four years) is a knowledge unit of type **SJ** (duration)
-- Portions without a `/...-XX` marker are non-knowledge-unit text (labeled as O)
-
-**Knowledge Unit Type Labels**:
+The corpus defines **12 medical knowledge-unit categories**:
 
 | Label | Meaning | Example |
 |-------|---------|---------|
@@ -125,11 +104,33 @@ The raw data uses an inline annotation format, where knowledge units are directl
 | CD | Pain Intensity | དྲག་པོ་ན་བ། (severe pain) |
 | SJ | Duration | ལོ་བཞི (four years), ལོ་སུམ་ཅུ (thirty years) |
 
-**Conversion Example**:
+### Data Format
 
-Raw annotation: `/མགོ་བོ-BW་/ན-LB་ཞིང་`
+**Raw annotation format.** Knowledge units are marked inline within sentences using the pattern `/knowledge_unit_text-label`. Unmarked text is treated as non-entity (label `O`). Example:
 
-After conversion (BIOES format):
+```
+ན་ལུགས་གཙོ་བོ།གསོ་བྱའི་/མགོ་བོ-BW་/ན-LB་ཞིང་/ལྟག་རྩ-BW་/གཟེར་བ-LB།/ཡན་ལག་གི་ཚིགས་གཞི-BW་/ན-LB་ཞིང་/བརྐྱང་བསྐུམ་བྱེད་དཀའ་བ-LB།/མཁལ་རྐེད-BW་/འཁོར་ནས-CD་/ན་བ-LB་བཅས་/ལོ་བཞི-SJ་ལྷག་འགོར།
+```
+
+- `/མགོ་བོ-BW` → "མགོ་བོ" (head) is a **BW** (body part) knowledge unit
+- `/ན-LB` → "ན" (pain) is an **LB** (clinical manifestation) knowledge unit
+- `/ལོ་བཞི-SJ` → "ལོ་བཞི" (four years) is an **SJ** (duration) knowledge unit
+
+**Training format (BIOES).** After preprocessing, data is stored one syllable per line, `syllable<TAB>label`, with sentences separated by blank lines:
+
+```
+མགོ	B-BW
+བོ	E-BW
+ན	S-LB
+ཞིང	O
+ལྟག	B-BW
+རྩ	E-BW
+གཟེར	B-LB
+བ	E-LB
+།	O
+```
+
+Conversion example — raw `/མགོ་བོ-BW་/ན-LB་ཞིང་` becomes:
 
 ```
 མགོ	B-BW
@@ -138,92 +139,124 @@ After conversion (BIOES format):
 ཞིང	O
 ```
 
-### Training Data Format (BIOES)
+All entity types use the `BIOES` scheme: `JB`, `TZ`, `LB`, `JZ`, `YM`, `JL`, `YF`, `FL`, `BW`, `FW`, `CD`, `SJ`.
 
-The training data uses the **BIOES** annotation format. Each line contains one character and its corresponding label, separated by a tab character. Sentences are separated by blank lines:
+### Data Splits
 
-```
-མགོ B-BW
-བོ E-BW
-ན S-LB
-ཞིང O
-ལྟག B-BW
-རྩ E-BW
-གཟེར B-LB
-བ E-LB
-། O
-ཡན B-BW
-ལག I-BW
-གི I-BW
-ཚིགས I-BW
-གཞི E-BW
-ན S-LB
-ཞིང O
-བརྐྱང B-LB
-བསྐུམ I-LB
-བྱེད I-LB
-དཀའ I-LB
-བ E-LB
-། O
-```
+The dataset is split into training, validation, and test sets in the following proportions:
 
-In the medical domain data of this project, the label system uses the `BIOES` format, and the entity types include: `JB`, `TZ`, `LB`, `JZ`, `YM`, `JL`, `YF`, `FL`, `BW`, `FW`, `CD`, `SJ`, etc.
+| Split | File | Proportion |
+|-------|------|------------|
+| Training | `data/train.txt` | 60% |
+| Validation | `data/dev.txt` | 20% |
+| Test | `data/test.txt` | 20% |
+
+### How to Obtain the Data
+
+A subset of **ZY_MER_Corpus** is publicly available:
+
+- 📥 **Download:** [https://github.com/jamyangdondrub/ZY-EMR-Corpus](https://github.com/jamyangdondrub/ZY-EMR-Corpus)
+
+Place the downloaded/split files under the `data/` directory as `train.txt`, `dev.txt`, and `test.txt`.
 
 ---
 
-## Detailed Module Analysis
+## Code Information
 
-### models.py — Model Definition
+### Project Structure
 
-Defines the `BertBiLSTMCRF` model class. Stacks TibetanBERT → optional BiLSTM → CRF decoder.
+```
+Tibetan-WWM/
+├── ner.py               # Main entry point: training / evaluation / testing / inference
+├── nert.py              # Converts raw inline-annotated data to BIOES format
+├── models.py            # Model definition: BERT-BiLSTM-CRF
+├── utils.py             # Data-processing utilities & Dataset construction
+├── conlleval.py         # Evaluation script (computes Precision / Recall / F1)
+├── clue_process.py      # JSON -> BIO annotation-format conversion
+│
+├── Tibetan-wwm/
+│   ├── bert_config.json # BERT model configuration file
+│   └── vocab.txt        # Vocabulary file
+│
+├── data/
+│   ├── train.txt        # Training set (BIOES format)
+│   ├── dev.txt          # Validation set (BIOES format)
+│   └── test.txt         # Test set (BIOES format)
+│
+├── model/
+│   ├── logs/            # Training log files
+│   └── checkpoints/     # Saved model weights
+│
+└── README.md            # Project documentation
+```
 
-### ner.py — Main Training/Prediction Script
+### Module Descriptions
 
-Main script controlling all pipeline modes via command-line flags: `--do_train`, `--do_eval`, `--do_test`, `--do_inference`.
+| File | Description |
+|------|-------------|
+| **`ner.py`** | Main script. Controls all pipeline modes via command-line flags (`--do_train`, `--do_eval`, `--do_test`, `--do_inference`). Handles argument parsing, data loading, model construction, the training loop, checkpointing, and prediction output. |
+| **`nert.py`** | Preprocessing. Converts raw inline-annotated Tibetan EMR text into BIOES sequence-labeling format. |
+| **`models.py`** | Defines the `BertBiLSTMCRF` model class: TibetanBERT encoder -> optional BiLSTM -> CRF decoder. |
+| **`utils.py`** | Builds PyTorch `Dataset` objects from BIOES text files; handles tokenization, label alignment, `label2id` mapping, and automatic splitting of texts longer than 512 characters at punctuation. |
+| **`conlleval.py`** | Evaluation. Adapted from the CoNLL shared task; computes entity-level Precision, Recall, and F1 per label type and overall. |
+| **`clue_process.py`** | Converts CLUE-format JSON annotations to BIO format for pipeline compatibility. |
 
-### utils.py — Data Processing Utilities
+### Model Configuration
 
-Builds PyTorch `Dataset` objects from BIOES text files. Handles tokenization, label alignment, and automatic sequence splitting at punctuation for texts exceeding 512 characters.
+TibetanBERT parameters (`Tibetan-wwm/config.json`):
 
-### conlleval.py — Evaluation Script
-
-Adapted from the CoNLL shared task. Computes entity-level Precision, Recall, and F1 per label type and overall.
-
-### clue_process.py — CLUE Dataset Preprocessing
-
-Converts CLUE-format JSON annotations to BIO format for pipeline compatibility.
-
----
-
-## Configuration File Description
-
-### 📌 TibetanBERT Configuration Parameters (`Tibetan-wwm/config.json`)
-
-| Parameter | Default Value | Description |
-|-----------|---------------|-------------|
-| hidden_size | 768 | Hidden layer dimension |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| hidden_size | 768 | Hidden-layer dimension |
 | num_hidden_layers | 12 | Number of Transformer encoder layers |
-| num_attention_heads | 12 | Number of multi-head attention heads |
-| intermediate_size | 3072 | FFN intermediate layer dimension |
+| num_attention_heads | 12 | Number of attention heads |
+| intermediate_size | 3072 | FFN intermediate-layer dimension |
 | vocab_size | 32000 | Vocabulary size |
-| max_position_embeddings | 512 | Maximum position encoding length |
+| max_position_embeddings | 512 | Maximum position-encoding length |
 | hidden_dropout_prob | 0.1 | Dropout probability |
 
 ---
 
-## Usage
+## Requirements
 
-### 1. Raw Tibetan Data Preprocessing
+```
+python           >= 3.7
+pytorch          >= 1.3.1
+pytorch-crf      >= 0.7.2
+transformers
+pytorch-transformers
+tensorboardX
+tqdm
+numpy
+```
 
-Convert raw data from inline annotation format to BIOES sequence labeling format:
+A **CUDA-capable GPU** is required (see [Notes](#notes)).
+
+---
+
+## Usage Instructions
+
+### Installation
+
+```bash
+git clone https://github.com/jamyangdondrub/Tibetan-Medicine-Electronic-Medical-Records.git
+cd Tibetan-Medicine-Electronic-Medical-Records
+pip install torch transformers pytorch-crf tensorboardX tqdm numpy pytorch-transformers
+```
+
+You also need the **TibetanBERT-wwm pre-trained model** (`config.json`, `vocab.txt`, `pytorch_model.bin`) placed in a local directory.
+
+### Step 1 — Preprocess Raw Data
+
+Convert raw inline-annotated data to BIOES sequence-labeling format:
 
 ```bash
 python nert.py
 ```
 
-Input: `Raw Tibetan electronic medical record data` (inline annotation format) → Output: `Sequence labeling file` (BIOES format)
+Input: raw Tibetan EMR data (inline annotation) -> Output: BIOES sequence-labeling file.
 
-### 2. Train the Model
+### Step 2 — Train the Model
 
 ```bash
 BERT_BASE_DIR=/path/to/your/model_name
@@ -248,7 +281,7 @@ python ner.py \
     --output_dir $OUTPUT_DIR
 ```
 
-### 3. Test the Model
+### Step 3 — Test the Model
 
 ```bash
 python ner.py \
@@ -262,7 +295,7 @@ python ner.py \
     --output_dir ./model/output
 ```
 
-### 4. Inference (Batch Prediction)
+### Step 4 — Inference (Batch Prediction)
 
 ```bash
 python ner.py \
@@ -276,7 +309,7 @@ python ner.py \
     --output_dir ./model/output
 ```
 
-### 5. View Training Logs
+### Step 5 — View Training Logs
 
 ```bash
 tensorboard --logdir=./model/output/eval
@@ -284,40 +317,46 @@ tensorboard --logdir=./model/output/eval
 
 ---
 
+## Methodology
+
+1. **Data preprocessing** — Raw inline-annotated Tibetan EMR text is converted to BIOES format with `nert.py`, then split into training/validation/test sets.
+2. **Encoding** — TibetanBERT-wwm produces context-aware syllable-level embeddings.
+3. **Sequence modeling** — An optional BiLSTM captures longer-range sequential dependencies over the BERT outputs.
+4. **Decoding** — A CRF layer models label-transition constraints and outputs the globally optimal label sequence.
+5. **Training** — The model is fine-tuned end-to-end with the AdamW optimizer on the labeled EMR data.
+6. **Evaluation** — Entity-level Precision, Recall, and F1 are computed with the CoNLL protocol via `conlleval.py`.
+
+---
+
 ## Model Performance
 
-### Results on the ZY_MER_Corpus Validation Set:
+Results on the **ZY_MER_Corpus** validation set:
 
----
+| Metric | Value |
+|--------|-------|
+| Precision | 92.08% |
+| Recall | 94.17% |
+| F1 | 93.11% |
 
-<img width="1849" height="902" alt="image" src="https://github.com/user-attachments/assets/e29c8de5-230d-4de0-bff6-c0aeaefcad7a" />
+<img width="1849" height="902" alt="overall-results" src="https://github.com/user-attachments/assets/e29c8de5-230d-4de0-bff6-c0aeaefcad7a" />
 
----
+<img width="2559" height="2325" alt="per-entity-results" src="https://github.com/user-attachments/assets/03bda604-5d14-47b6-8274-1c0dca8f37cd" />
 
-<img width="2559" height="2325" alt="image" src="https://github.com/user-attachments/assets/03bda604-5d14-47b6-8274-1c0dca8f37cd" />
-
----
-
-# 🔗 Raw Data: ZY_MER_Corpus
-
-- ## 📥 Raw data: [Download](https://github.com/jamyangdondrub/ZY-EMR-Corpus)
-
-> **Note:** A subset of ZY_MER_Corpus is publicly available at the link above. 
 ---
 
 ## Notes
 
-1. **GPU Requirement**: The model requires a CUDA-capable GPU. The code hardcodes GPU usage with `device = torch.device("cuda")`. If you need to run on CPU, you must manually modify this.
-2. **Pre-trained Model**: You need to download the Tibetan BERT pre-trained model (e.g., `TibetanBERT`), which includes `config.json`, `vocab.txt`, and `pytorch_model.bin`.
-3. **Long Text Handling**: The `read_pred_data` method in `utils.py` will automatically split texts exceeding 512 characters at punctuation marks.
-4. **Label Consistency**: The label scheme must remain consistent between training and prediction. The label mapping is saved in `output_dir/label2id.pkl`.
-5. **Mixed Imports**: The code uses both `pytorch-transformers` (legacy) and `transformers` (current) imports. In practice, `transformers` takes precedence at runtime.
+1. **GPU requirement.** The code hardcodes GPU usage via `device = torch.device("cuda")`. To run on CPU, modify this line manually.
+2. **Pre-trained model.** Download the Tibetan BERT model (`config.json`, `vocab.txt`, `pytorch_model.bin`) before training.
+3. **Long-text handling.** The `read_pred_data` method in `utils.py` automatically splits texts longer than 512 characters at punctuation marks.
+4. **Label consistency.** The label scheme must be identical between training and prediction; the mapping is saved in `output_dir/label2id.pkl`.
+5. **Mixed imports.** The code imports from both `pytorch-transformers` (legacy) and `transformers` (current); at runtime, `transformers` takes precedence.
 
 ---
 
 ## Citations
 
-If you use this code or dataset in your research, please cite the following:
+If you use this code or dataset in your research, please cite:
 
 **TibetanBERT-wwm pre-trained model:**
 
@@ -349,18 +388,22 @@ If you use this code or dataset in your research, please cite the following:
 
 ## License
 
-This project is released under the [MIT License](LICENSE).
-Free to use for academic and research purposes.
-For commercial use, please contact the authors.
+This project is released under the [MIT License](LICENSE). It is free to use for academic and research purposes. For commercial use, please contact the authors.
 
 ---
 
 ## Contributing
 
-Contributions are welcome!
+Contributions are welcome:
 
-1. Fork this repository: `https://github.com/jamyangdondrub/Tibetan-Medicine-Electronic-Medical-Records/fork`
-2. Create your feature branch: `git checkout -b feature/your-feature`
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/your-feature`
 3. Commit your changes: `git commit -m 'Add some feature'`
-4. Push to the branch: `git push origin feature/your-feature`
-5. Open a Pull Request at: `https://github.com/jamyangdondrub/Tibetan-Medicine-Electronic-Medical-Records/pulls`
+4. Push the branch: `git push origin feature/your-feature`
+5. Open a Pull Request.
+
+---
+
+## Contact
+
+For questions, please contact **jamyangdondrub** (email: **zwxxzx@qhnu.edu.cn**), or open an issue on GitHub.
