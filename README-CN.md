@@ -1,3 +1,5 @@
+[English](README.md) | [简体中文](README-CN.md)
+
 # 🚀 藏医电子病历医学知识单元识别
 
 一个用于识别**藏医电子病历（EMR）**中医学知识单元的命名实体识别（NER）框架，基于 **TibetanBERT-wwm + BiLSTM + CRF**。
